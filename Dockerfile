@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
     libpoppler-cpp-dev \
     libpoppler-glib-dev \
     poppler-utils \
+    poppler-data \
+    libpoppler-private-dev \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
@@ -21,7 +23,6 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     fontforge \
     libfontforge-dev \
-    poppler-data \
     git \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
