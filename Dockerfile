@@ -1,40 +1,35 @@
-# Use Ubuntu 20.04 where libfontforge-dev is available
 FROM ubuntu:20.04
 
-# Set non-interactive mode
+# Set noninteractive mode to avoid prompts during package installation
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
-RUN apt-get update && apt-get install -y \
+RUN apt update && apt install -y \
+    build-essential \
     cmake \
-    g++ \
+    pkg-config \
     libpoppler-dev \
     libpoppler-cpp-dev \
+    poppler-utils \
+    libcairo2-dev \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
-    libcairo2-dev \
-    libboost-all-dev \
-    fontforge \
-    libfontforge-dev \
+    libtiff-dev \
+    libgif-dev \
     git \
+    default-jre \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the pdf2htmlEX repository
-RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
+# Clone pdf2htmlEX repository
+RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git /pdf2htmlEX
 
-# Verify the contents of the cloned repo
-RUN ls -l pdf2htmlEX && ls -l pdf2htmlEX/pdf2htmlEX
+# Build pdf2htmlEX
+WORKDIR /pdf2htmlEX
+RUN mkdir build && cd build \
+    && cmake .. \
+    && make -j$(nproc) \
+    && make install
 
-# Build from the correct subdirectory
-RUN cd pdf2htmlEX/pdf2htmlEX && \
-    mkdir -p build && cd build && \
-    cmake .. && \
-    make -j$(nproc) && \
-    make install
-
-# Cleanup to reduce image size
-RUN rm -rf pdf2htmlEX
-
-# Set the default command
-CMD ["pdf2htmlEX", "--help"]
+# Set up entrypoint
+ENTRYPOINT ["pdf2htmlEX"]
