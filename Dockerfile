@@ -37,17 +37,13 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the pdf2htmlEX repository (the coolwanglu fork)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
-# Remove the bundled Poppler sources and patch CMakeLists.txt:
-#    - Delete the bundled poppler directory.
-#    - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
-#    - Insert include directories for system Poppler headers (both public and private).
-#    - Append a target_include_directories() call so that the pdf2htmlEX target explicitly includes these paths.
-RUN rm -rf pdf2htmlEX/3rdparty/poppler && \
-    sed -i '/set(CAIROOUTPUTDEV_PATH 3rdparty\/poppler\/git)/,+9d' pdf2htmlEX/CMakeLists.txt && \
-    sed -i '/^project(/a include_directories(/usr/include/poppler)\ninclude_directories(/usr/include/poppler-private)' pdf2htmlEX/CMakeLists.txt && \
-    echo 'target_include_directories(pdf2htmlEX PRIVATE /usr/include/poppler /usr/include/poppler-private)' >> pdf2htmlEX/CMakeLists.txt
+# Correct the pkg-config module name from 'libfontforge' to 'fontforge' in CMakeLists.txt
+RUN sed -i 's/libfontforge/fontforge/g' pdf2htmlEX/CMakeLists.txt
 
-# Build pdf2htmlEX using system Poppler libraries
+# Set PKG_CONFIG_PATH to include the directory with fontforge.pc
+ENV PKG_CONFIG_PATH=/usr/lib/x86_64-linux-gnu/pkgconfig:/usr/local/lib/pkgconfig:$PKG_CONFIG_PATH
+
+# Build pdf2htmlEX using system Poppler and FontForge libraries
 RUN cd pdf2htmlEX && \
     mkdir -p build && cd build && \
     cmake .. -DCMAKE_CXX_STANDARD=11 -DPDF2HTMLEX_USE_SYSTEM_POPPLER=ON && \
