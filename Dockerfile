@@ -37,12 +37,15 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the pdf2htmlEX repository (the coolwanglu fork)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
-# Remove the bundled Poppler directory and patch CMakeLists.txt
+# Remove the bundled Poppler directory and patch CMakeLists.txt to remove references to its sources
 RUN rm -rf pdf2htmlEX/3rdparty/poppler && \
     sed -i '/3rdparty\/poppler\/git/d' pdf2htmlEX/CMakeLists.txt && \
-    sed -i '/3rdparty\/poppler\/git\/CairoFontEngine/d' pdf2htmlEX/CMakeLists.txt && \
-    sed -i '/3rdparty\/poppler\/git\/CairoOutputDev/d' pdf2htmlEX/CMakeLists.txt && \
-    sed -i '/3rdparty\/poppler\/git\/CairoRescaleBox/d' pdf2htmlEX/CMakeLists.txt
+    sed -i '/CairoFontEngine\.h/d' pdf2htmlEX/CMakeLists.txt && \
+    sed -i '/CairoFontEngine\.cc/d' pdf2htmlEX/CMakeLists.txt && \
+    sed -i '/CairoRescaleBox\.h/d' pdf2htmlEX/CMakeLists.txt && \
+    sed -i '/CairoRescaleBox\.cc/d' pdf2htmlEX/CMakeLists.txt && \
+    sed -i '/CairoOutputDev\.h/d' pdf2htmlEX/CMakeLists.txt && \
+    sed -i '/CairoOutputDev\.cc/d' pdf2htmlEX/CMakeLists.txt
 
 # Build pdf2htmlEX using the system Poppler libraries
 RUN cd pdf2htmlEX && \
@@ -56,5 +59,5 @@ RUN cd pdf2htmlEX && \
 # Clean up the source directory
 RUN rm -rf pdf2htmlEX
 
-# Set the default command to show help
+# Set the default command to display help
 CMD ["pdf2htmlEX", "--help"]
