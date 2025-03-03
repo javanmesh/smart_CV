@@ -19,7 +19,6 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     fontforge \
     libfontforge-dev \
-    libfontforge1 \
     git \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
