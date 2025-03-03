@@ -1,0 +1,5 @@
+flask
+weasyprint
+pdfplumber
+beautifulsoup4
+mistralai
