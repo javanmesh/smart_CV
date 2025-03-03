@@ -37,6 +37,9 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the coolwanglu/pdf2htmlEX fork (more up-to-date)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
+# Remove the bundled Poppler to force use of system Poppler
+RUN rm -rf pdf2htmlEX/3rdparty/poppler
+
 # Build pdf2htmlEX with system Poppler
 RUN cd pdf2htmlEX && \
     mkdir -p build && cd build && \
