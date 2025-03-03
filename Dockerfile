@@ -1,51 +1,34 @@
-# Use Ubuntu 20.04
-FROM ubuntu:20.04
+FROM ubuntu:latest
 
-# Set non-interactive mode
+# Set non-interactive mode for installations
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     cmake \
+    make \
     g++ \
     pkg-config \
-    libpoppler-dev \
-    libpoppler-cpp-dev \
-    libpoppler-glib-dev \
     poppler-utils \
-    libfreetype6-dev \
+    libpoppler-dev \
+    libpoppler-private-dev \
+    libpoppler-glib-dev \
+    libcairo2-dev \
     libjpeg-dev \
     libpng-dev \
-    libcairo2-dev \
-    libglib2.0-dev \
-    libboost-all-dev \
-    fontforge \
-    libfontforge-dev \
-    poppler-data \
-    git \
-    openjdk-11-jdk \
-    && rm -rf /var/lib/apt/lists/*
+    libfontconfig1-dev \
+    libfreetype6-dev \
+    git
 
-# Set Java environment
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Clone pdf2htmlEX repository
+RUN git clone https://github.com/pdf2htmlEX/pdf2htmlEX.git /pdf2htmlEX
 
-# Clone the coolwanglu/pdf2htmlEX fork (more up-to-date)
-RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
-
-# Build from the correct subdirectory with adjusted CMake flags
-RUN cd pdf2htmlEX && \
-    mkdir -p build && cd build && \
-    cmake .. \
-        -DCMAKE_CXX_STANDARD=11 \
-        -DCMAKE_CXX_FLAGS="-I/usr/include/poppler" \
-        -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu" \
-        -DCMAKE_INCLUDE_PATH="/usr/include/poppler" \
-        -DCMAKE_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu" && \
+# Create build directory and compile
+WORKDIR /pdf2htmlEX
+RUN mkdir build && cd build && \
+    cmake .. && \
     make -j$(nproc) && \
     make install
 
-# Cleanup
-RUN rm -rf pdf2htmlEX
-
-CMD ["pdf2htmlEX", "--help"]
+# Set the entrypoint
+ENTRYPOINT ["/usr/local/bin/pdf2htmlEX"]
