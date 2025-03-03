@@ -1,4 +1,23 @@
-# Use Ubuntu 20.04 where libfontforge-dev is available
+# Install Poppler development libraries
+sudo apt update
+sudo apt install libpoppler-cpp-dev libpoppler-private-dev
+
+# If libpoppler-private-dev is not available, try:
+sudo apt install libpoppler-dev
+
+# Ensure CMake finds Poppler
+rm -rf build
+mkdir build
+cd build
+cmake ..
+make -j$(nproc)
+
+# Check if the headers exist
+dpkg -L libpoppler-dev | grep poppler-config.h
+
+# If the file isn’t found, consider installing an older version of Poppler
+
+# Dockerfile for building pdf2htmlEX using Ubuntu 20.04
 FROM ubuntu:20.04
 
 # Set non-interactive mode
