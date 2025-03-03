@@ -1,7 +1,7 @@
-# Use an older Ubuntu version where libfontforge-dev is available
+# Use Ubuntu 20.04 where libfontforge-dev is available
 FROM ubuntu:20.04
 
-# Set non-interactive mode to avoid prompts
+# Set non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive
 
 # Install dependencies
@@ -20,13 +20,14 @@ RUN apt-get update && apt-get install -y \
     git \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the pdf2htmlEX repository and verify
-RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
-    cd pdf2htmlEX && git submodule update --init --recursive && \
-    ls -l && ls -l CMakeLists.txt
+# Clone the pdf2htmlEX repository
+RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX
-RUN cd pdf2htmlEX && \
+# Verify the contents of the cloned repo
+RUN ls -l pdf2htmlEX && ls -l pdf2htmlEX/pdf2htmlEX
+
+# Build from the correct subdirectory
+RUN cd pdf2htmlEX/pdf2htmlEX && \
     mkdir -p build && cd build && \
     cmake .. && \
     make -j$(nproc) && \
