@@ -1,26 +1,35 @@
-# Use Debian as the base image
-FROM debian:bookworm
+FROM ubuntu:latest
 
 # Install dependencies
 RUN apt-get update && apt-get install -y \
-    wget git cmake g++ make \
-    poppler-utils poppler-data \
-    libpoppler-dev libpoppler-private-dev \
-    libpng-dev libjpeg-dev \
-    libfontconfig1-dev libfreetype6-dev pkg-config \
-    automake autoconf libtool \
-    python3 python3-pip
+    cmake \
+    g++ \
+    libpoppler-dev \
+    libpoppler-cpp-dev \
+    libfontforge-dev \
+    libfreetype6-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libcairo2-dev \
+    libboost-all-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory
-WORKDIR /usr/src
+# Clone the repository
+RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Clone the pdf2htmlEX repository and build it
-RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
-    cd pdf2htmlEX && \
-    cmake . && \
+# Check if the repository cloned correctly
+RUN ls -l pdf2htmlEX
+
+# Check if CMakeLists.txt exists
+RUN cd pdf2htmlEX && ls -l
+
+# Build pdf2htmlEX
+RUN cd pdf2htmlEX && \
+    mkdir build && cd build && \
+    cmake .. && \
     make -j$(nproc) && \
-    make install && \
-    cd .. && rm -rf pdf2htmlEX
+    make install
 
-# Set the default command
-CMD ["pdf2htmlEX", "--help"]
+# Cleanup
+RUN rm -rf pdf2htmlEX
