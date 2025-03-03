@@ -38,10 +38,10 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
 # Remove the bundled Poppler sources and patch CMakeLists.txt:
-#   - Delete the bundled poppler directory.
-#   - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
-#   - Insert include directories for system Poppler headers (both public and private).
-#   - Append a target_include_directories() call so that the pdf2htmlEX target explicitly includes these paths.
+#    - Delete the bundled poppler directory.
+#    - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
+#    - Insert include directories for system Poppler headers (both public and private).
+#    - Append a target_include_directories() call so that the pdf2htmlEX target explicitly includes these paths.
 RUN rm -rf pdf2htmlEX/3rdparty/poppler && \
     sed -i '/set(CAIROOUTPUTDEV_PATH 3rdparty\/poppler\/git)/,+9d' pdf2htmlEX/CMakeLists.txt && \
     sed -i '/^project(/a include_directories(/usr/include/poppler)\ninclude_directories(/usr/include/poppler-private)' pdf2htmlEX/CMakeLists.txt && \
@@ -56,6 +56,9 @@ RUN cd pdf2htmlEX && \
 
 # Clean up the source directory
 RUN rm -rf pdf2htmlEX
+
+#copy fontforge .pc file
+RUN cp /usr/local/lib/pkgconfig/fontforge.pc /usr/lib/x86_64-linux-gnu/pkgconfig/
 
 # Default command: show pdf2htmlEX help
 CMD ["pdf2htmlEX", "--help"]
