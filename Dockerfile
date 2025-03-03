@@ -4,7 +4,7 @@ FROM ubuntu:20.04
 # Set non-interactive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required packages and dependencies (including libpoppler-private-dev)
+# Install required packages and dependencies, including the private poppler headers
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
@@ -31,6 +31,9 @@ RUN apt-get update && apt-get install -y \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
 
+# Create a symlink so that #include <goo/gtypes.h> resolves correctly.
+RUN ln -s /usr/include/poppler/goo /usr/include/goo
+
 # Set Java environment variables
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
@@ -38,16 +41,16 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the pdf2htmlEX repository (coolwanglu fork)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
-# Remove the bundled Poppler directory and patch CMakeLists.txt:
-#   - Delete the bundled poppler sources
-#   - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH)
-#   - Insert an include for /usr/include/poppler and ensure the target gets it
+# Remove bundled Poppler sources and patch CMakeLists.txt:
+#   - Delete the bundled poppler directory.
+#   - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
+#   - Add an include directory for /usr/include/poppler.
 RUN rm -rf pdf2htmlEX/3rdparty/poppler && \
     sed -i '/set(CAIROOUTPUTDEV_PATH 3rdparty\/poppler\/git)/,+9d' pdf2htmlEX/CMakeLists.txt && \
     sed -i '/^project(/a include_directories(/usr/include/poppler)' pdf2htmlEX/CMakeLists.txt && \
     echo 'target_include_directories(pdf2htmlEX PRIVATE /usr/include/poppler)' >> pdf2htmlEX/CMakeLists.txt
 
-# Build pdf2htmlEX using the system Poppler libraries
+# Build pdf2htmlEX using system Poppler libraries
 RUN cd pdf2htmlEX && \
     mkdir -p build && cd build && \
     cmake .. -DCMAKE_CXX_STANDARD=11 -DPDF2HTMLEX_USE_SYSTEM_POPPLER=ON && \
@@ -57,5 +60,5 @@ RUN cd pdf2htmlEX && \
 # Clean up the source directory
 RUN rm -rf pdf2htmlEX
 
-# Set default command to show pdf2htmlEX help
+# Default command: show pdf2htmlEX help
 CMD ["pdf2htmlEX", "--help"]
