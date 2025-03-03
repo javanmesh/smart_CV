@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customized Resume</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="resume-container animate__animated animate__fadeIn">
+        <!-- Header -->
+        <header class="resume-header">
+            <h1 class="name">{{ name }}</h1>
+            <div class="contact-info">
+                <div class="contact-item">
+                    <i class="fas fa-envelope"></i>
+                    <span>{{ email }}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fas fa-phone"></i>
+                    <span>{{ phone }}</span>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-linkedin"></i>
+                    <a href="{{ linkedin }}">LinkedIn</a>
+                </div>
+                <div class="contact-item">
+                    <i class="fab fa-github"></i>
+                    <a href="{{ github }}">GitHub</a>
+                </div>
+            </div>
+        </header>
+
+        <main class="resume-content">
+            <!-- Professional Summary -->
+            <section class="resume-section animate__animated animate__slideInLeft">
+                <h2 class="section-title"><i class="fas fa-user-tie"></i> Professional Summary</h2>
+                <div class="section-content">{{ summary }}</div>
+            </section>
+
+            <!-- Experience -->
+            <section class="resume-section animate__animated animate__slideInRight">
+                <h2 class="section-title"><i class="fas fa-briefcase"></i> Experience</h2>
+                <div class="section-content">{{ experience }}</div>
+            </section>
+
+            <!-- Education -->
+            <section class="resume-section animate__animated animate__slideInLeft">
+                <h2 class="section-title"><i class="fas fa-graduation-cap"></i> Education</h2>
+                <div class="section-content">{{ education }}</div>
+            </section>
+
+            <!-- Skills -->
+            <section class="resume-section skills-section animate__animated animate__slideInRight">
+                <h2 class="section-title"><i class="fas fa-tools"></i> Skills</h2>
+                <div class="skills-grid">{{ skills }}</div>
+            </section>
+
+            <!-- Certifications -->
+            <section class="resume-section animate__animated animate__slideInLeft">
+                <h2 class="section-title"><i class="fas fa-certificate"></i> Certifications</h2>
+                <div class="section-content">{{ certifications }}</div>
+            </section>
+
+            <!-- Projects -->
+            <section class="resume-section animate__animated animate__slideInRight">
+                <h2 class="section-title"><i class="fas fa-project-diagram"></i> Projects</h2>
+                <div class="projects-grid">{{ projects }}</div>
+            </section>
+
+            {% if cover_letter %}
+            <section class="resume-section animate__animated animate__fadeIn">
+                <h2 class="section-title"><i class="fas fa-envelope-open-text"></i> Cover Letter</h2>
+                <div class="section-content">{{ cover_letter }}</div>
+            </section>
+            {% endif %}
+        </main>
+    </div>
+</body>
+</html>

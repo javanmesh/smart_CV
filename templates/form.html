@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Resume Customization Form</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <div class="form-container animate__animated animate__fadeInUp">
+        <div class="form-header">
+            <img src="https://cdn-icons-png.flaticon.com/512/1534/1534959.png" alt="AI Icon" class="header-icon">
+            <h2 class="form-title">JavaNyx AI-Powered Resume & Cover Letter Generator</h2>
+            <p class="form-subtitle">Transform your career materials with AI precision</p>
+        </div>
+
+        <form method="post" enctype="multipart/form-data" class="styled-form">
+            <div class="form-group floating-label">
+                <textarea name="job_description" class="text-area" rows="4" required></textarea>
+                <label>Job Description</label>
+                <div class="highlight"></div>
+            </div>
+
+            <div class="form-group file-upload">
+                <input type="file" name="cv" required class="file-input" id="cvUpload">
+                <label for="cvUpload" class="upload-label">
+                    <svg class="upload-icon" viewBox="0 0 24 24">
+                        <path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11z"/>
+                        <path d="M8 15h8v2H8zm0-4h8v2H8zm0-4h3v2H8z"/>
+                    </svg>
+                    <span>Upload CV (PDF)</span>
+                </label>
+            </div>
+
+            <div class="form-group select-group">
+                <select name="document_type" class="doc-type-select">
+                    <option value="resume">Resume</option>
+                    <option value="cover_letter">Cover Letter</option>
+                </select>
+                <div class="select-arrow"></div>
+            </div>
+
+            <div class="form-actions">
+                <button type="submit" class="submit-btn">
+                    <span class="btn-text">Generate Document</span>
+                    <div class="loader"></div>
+                </button>
+            </div>
+        </form>
+    </div>
+</body>
+</html>
