@@ -22,12 +22,12 @@ RUN apt-get update && apt-get install -y \
 
 # Clone the pdf2htmlEX repository and verify
 RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
-    ls -l pdf2htmlEX && \
-    cd pdf2htmlEX && ls -l
+    cd pdf2htmlEX && git submodule update --init --recursive && \
+    ls -l && ls -l CMakeLists.txt
 
 # Build pdf2htmlEX
 RUN cd pdf2htmlEX && \
-    mkdir build && cd build && \
+    mkdir -p build && cd build && \
     cmake .. && \
     make -j$(nproc) && \
     make install
