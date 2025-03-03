@@ -1,14 +1,19 @@
-FROM python:3.9
-
-WORKDIR /app
-
-COPY . .
+FROM debian:bookworm
 
 # Install dependencies
-RUN apt-get update && \
-    apt-get install -y wget && \
-    wget -qO - https://dl.google.com/linux/linux_signing_key.pub | apt-key add - && \
-    apt-get install -y pdf2htmlex && \
-    pip install -r requirements.txt
+RUN apt-get update && apt-get install -y \
+    wget git cmake g++ make poppler-utils poppler-data \
+    libpoppler-dev libpoppler-private-dev \
+    libfontforge-dev libpng-dev libjpeg-dev
 
-CMD ["python", "app.py"]
+# Clone and build pdf2htmlex
+RUN git clone https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
+    cd pdf2htmlEX && \
+    cmake . && make -j$(nproc) && make install
+
+# Install Python dependencies
+COPY requirements.txt /app/requirements.txt
+WORKDIR /app
+RUN pip install --no-cache-dir -r requirements.txt
+
+CMD ["/bin/bash"]
