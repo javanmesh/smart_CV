@@ -1,5 +1,5 @@
 # Use an older Ubuntu version where libfontforge-dev is available
-FROM ubuntu:22.04
+FROM ubuntu:20.04
 
 # Set non-interactive mode to avoid prompts
 ENV DEBIAN_FRONTEND=noninteractive
@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     libcairo2-dev \
     libboost-all-dev \
     fontforge \
+    libfontforge-dev \
     git \
     && rm -rf /var/lib/apt/lists/*
 
