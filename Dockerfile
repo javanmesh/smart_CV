@@ -10,6 +10,8 @@ RUN apt-get update && apt-get install -y \
     g++ \
     libpoppler-dev \
     libpoppler-cpp-dev \
+    libpoppler-private-dev \
+    poppler-utils \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
@@ -17,6 +19,7 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     fontforge \
     libfontforge-dev \
+    libfontforge1 \
     git \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
@@ -28,8 +31,9 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Verify Java installation
 RUN java -version
 
-# Clone the pdf2htmlEX repository
-RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
+# Clone the pdf2htmlEX repository and submodules
+RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
+    cd pdf2htmlEX && git submodule update --init --recursive
 
 # Verify the contents of the cloned repo
 RUN ls -l pdf2htmlEX && ls -l pdf2htmlEX/pdf2htmlEX
@@ -37,7 +41,7 @@ RUN ls -l pdf2htmlEX && ls -l pdf2htmlEX/pdf2htmlEX
 # Build from the correct subdirectory
 RUN cd pdf2htmlEX/pdf2htmlEX && \
     mkdir -p build && cd build && \
-    cmake .. && \
+    cmake .. -DCMAKE_CXX_STANDARD=11 -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu && \
     make -j$(nproc) && \
     make install
 
