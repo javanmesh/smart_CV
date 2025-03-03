@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
     libboost-all-dev \
     fontforge \
     libfontforge-dev \
-    **libpango1.0-dev** \  # <-- This is the new line you need
+    libpango1.0-dev \
     poppler-data \
     git \
     openjdk-11-jdk \
