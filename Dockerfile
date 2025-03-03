@@ -5,16 +5,17 @@ FROM debian:bookworm
 RUN apt-get update && apt-get install -y \
     wget git cmake g++ make poppler-utils poppler-data \
     libpoppler-dev libpoppler-private-dev \
-    libpng-dev libjpeg-dev fontforge libcairo2-dev \
-    libpoppler-glib-dev libglib2.0-dev libfontconfig1-dev \
-    pkg-config libfreetype6-dev
+    libpng-dev libjpeg-dev \
+    libfontconfig1-dev libfreetype6-dev pkg-config \
+    automake autoconf libtool
 
-# Clone the latest pdf2htmlEX source code and build it
+# Set the working directory
 WORKDIR /usr/src
+
+# Clone the pdf2htmlEX repository
 RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
     cd pdf2htmlEX && \
-    cmake . && \
-    make -j$(nproc) && \
+    ./buildScripts/build && \
     make install && \
     cd .. && rm -rf pdf2htmlEX
 
