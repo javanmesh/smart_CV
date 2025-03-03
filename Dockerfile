@@ -1,15 +1,13 @@
 FROM debian:bookworm
 
 # Install dependencies
-RUN apt-get update && apt-get install -y \
-    wget git cmake g++ make poppler-utils poppler-data \
-    libpoppler-dev libpoppler-private-dev \
-    libfontforge-dev libpng-dev libjpeg-dev
+RUN apt-get update && apt-get install -y wget
 
-# Clone and build pdf2htmlex
-RUN git clone https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
-    cd pdf2htmlEX && \
-    cmake . && make -j$(nproc) && make install
+# Download and extract prebuilt pdf2htmlex binary
+RUN wget https://github.com/pdf2htmlEX/pdf2htmlEX/releases/download/v0.18.8.rc1/pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz && \
+    tar -xvf pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz && \
+    mv pdf2htmlEX /usr/local/bin/ && \
+    rm pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz
 
 # Install Python dependencies
 COPY requirements.txt /app/requirements.txt
