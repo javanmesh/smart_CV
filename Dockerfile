@@ -1,17 +1,22 @@
+# Use the official Debian Bookworm base image
 FROM debian:bookworm
 
 # Install dependencies
-RUN apt-get update && apt-get install -y wget
+RUN apt-get update && apt-get install -y \
+    wget git cmake g++ make poppler-utils poppler-data \
+    libpoppler-dev libpoppler-private-dev \
+    libpng-dev libjpeg-dev fontforge libcairo2-dev \
+    libpoppler-glib-dev libglib2.0-dev libfontconfig1-dev \
+    pkg-config libfreetype6-dev
 
-# Download and extract prebuilt pdf2htmlex binary
-RUN wget https://github.com/pdf2htmlEX/pdf2htmlEX/releases/download/v0.18.8.rc1/pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz && \
-    tar -xvf pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz && \
-    mv pdf2htmlEX /usr/local/bin/ && \
-    rm pdf2htmlEX-0.18.8.rc1-linux-64bit.tar.gz
+# Clone the latest pdf2htmlEX source code and build it
+WORKDIR /usr/src
+RUN git clone --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git && \
+    cd pdf2htmlEX && \
+    cmake . && \
+    make -j$(nproc) && \
+    make install && \
+    cd .. && rm -rf pdf2htmlEX
 
-# Install Python dependencies
-COPY requirements.txt /app/requirements.txt
-WORKDIR /app
-RUN pip install --no-cache-dir -r requirements.txt
-
-CMD ["/bin/bash"]
+# Set the default command
+CMD ["pdf2htmlEX", "--help"]
