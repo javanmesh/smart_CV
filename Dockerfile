@@ -8,17 +8,20 @@ ENV DEBIAN_FRONTEND=noninteractive
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
+    pkg-config \
     libpoppler-dev \
     libpoppler-cpp-dev \
-    libpoppler-private-dev \
+    libpoppler-glib-dev \
     poppler-utils \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
     libcairo2-dev \
+    libglib2.0-dev \
     libboost-all-dev \
     fontforge \
     libfontforge-dev \
+    poppler-data \
     git \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
@@ -40,7 +43,7 @@ RUN ls -l pdf2htmlEX && ls -l pdf2htmlEX/pdf2htmlEX
 # Build from the correct subdirectory
 RUN cd pdf2htmlEX/pdf2htmlEX && \
     mkdir -p build && cd build && \
-    cmake .. -DCMAKE_CXX_STANDARD=11 -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu && \
+    cmake .. -DCMAKE_CXX_STANDARD=11 -DCMAKE_PREFIX_PATH=/usr/lib/x86_64-linux-gnu -DCMAKE_INCLUDE_PATH=/usr/include/poppler -DCMAKE_LIBRARY_PATH=/usr/lib/x86_64-linux-gnu && \
     make -j$(nproc) && \
     make install
 
