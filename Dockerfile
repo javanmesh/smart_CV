@@ -4,11 +4,14 @@ FROM ubuntu:20.04
 # Set non-interactive mode
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install dependencies
+# Install dependencies including autotools
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
     pkg-config \
+    autoconf \
+    automake \
+    libtool \
     libpoppler-dev \
     libpoppler-cpp-dev \
     libpoppler-glib-dev \
@@ -34,15 +37,12 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the coolwanglu/pdf2htmlEX fork (more up-to-date)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
-# Build from the correct subdirectory with adjusted CMake flags
+# Build pdf2htmlEX with necessary build tools for submodules
 RUN cd pdf2htmlEX && \
     mkdir -p build && cd build && \
     cmake .. \
         -DCMAKE_CXX_STANDARD=11 \
-        -DCMAKE_CXX_FLAGS="-I/usr/include/poppler" \
-        -DCMAKE_PREFIX_PATH="/usr/lib/x86_64-linux-gnu" \
-        -DCMAKE_INCLUDE_PATH="/usr/include/poppler" \
-        -DCMAKE_LIBRARY_PATH="/usr/lib/x86_64-linux-gnu" && \
+        && \
     make -j$(nproc) && \
     make install
 
