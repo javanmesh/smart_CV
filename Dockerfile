@@ -1,9 +1,10 @@
 # Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
 
+# Set non-interactive mode for apt-get
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required packages and dependencies (including libpoppler-private-dev)
+# Install required packages and dependencies (including private poppler headers)
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
@@ -30,6 +31,10 @@ RUN apt-get update && apt-get install -y \
     openjdk-11-jdk \
     && rm -rf /var/lib/apt/lists/*
 
+# Ensure that the internal poppler headers (the "goo" directory) are found:
+# Remove any existing /usr/include/goo and create a symlink from /usr/include/poppler/goo to /usr/include/goo
+RUN rm -rf /usr/include/goo && ln -s /usr/include/poppler/goo /usr/include/goo
+
 # Set Java environment variables
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
@@ -37,10 +42,11 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the pdf2htmlEX repository (coolwanglu fork)
 RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
 
-# Remove bundled Poppler and patch CMakeLists.txt:
+# Remove the bundled Poppler sources and patch CMakeLists.txt:
 #  - Delete the bundled poppler directory.
-#  - Remove the block that adds bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
-#  - Insert include directories for system Poppler headers (both public and private).
+#  - Remove the block adding bundled Poppler source files (starting at CAIROOUTPUTDEV_PATH).
+#  - Insert include_directories for /usr/include/poppler and /usr/include/poppler-private.
+#  - Append a target_include_directories() line for pdf2htmlEX.
 RUN rm -rf pdf2htmlEX/3rdparty/poppler && \
     sed -i '/set(CAIROOUTPUTDEV_PATH 3rdparty\/poppler\/git)/,+9d' pdf2htmlEX/CMakeLists.txt && \
     sed -i '/^project(/a include_directories(/usr/include/poppler)\ninclude_directories(/usr/include/poppler-private)' pdf2htmlEX/CMakeLists.txt && \
