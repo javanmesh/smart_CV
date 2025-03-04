@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and dependencies, including libcurl dev package.
+# Install build tools and dependencies, including the CURL dev package.
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -61,7 +61,8 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD=17 \
       -DENABLE_SVG=ON \
       -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler \
-      -DPOPPLER_LIBRARIES=/usr/local/lib && \
+      -DPOPPLER_LIBRARIES=/usr/local/lib \
+      -DCMAKE_CXX_FLAGS="-I/usr/local/include/poppler" && \
     make -j$(nproc) && \
     make install
 
