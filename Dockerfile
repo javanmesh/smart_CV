@@ -2,7 +2,7 @@ FROM ubuntu:22.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required build tools, sudo, and other packages.
+# Install required build tools and libraries.
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -20,7 +20,6 @@ RUN apt-get update && apt-get install -y \
     libglib2.0-dev \
     libboost-all-dev \
     fontforge \
-    libfontforge-dev \
     libpango1.0-dev \
     git \
     openjdk-11-jdk \
@@ -31,19 +30,19 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the pdf2htmlEX repository (using the official GitHub repo).
+# Clone the pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# Set up environment variables (versions, paths, etc.)
+# Set up version environment variables and report them.
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
 # Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Clean up the build directory if desired.
+# Clean up.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
