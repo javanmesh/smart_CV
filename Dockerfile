@@ -1,8 +1,9 @@
+# Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
 
-# Set noninteractive mode for apt-get to avoid prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install required build tools and dependencies, including extra dependencies for the maintained fork
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
@@ -10,11 +11,11 @@ RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
     libtool \
-    poppler-utils \
     libpoppler-dev \
     libpoppler-cpp-dev \
     libpoppler-glib-dev \
     libpoppler-private-dev \
+    poppler-utils \
     libfreetype6-dev \
     libjpeg-dev \
     libpng-dev \
@@ -27,23 +28,26 @@ RUN apt-get update && apt-get install -y \
     poppler-data \
     git \
     openjdk-11-jdk \
+    npm \
+    nodejs \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Set Java environment variables
 ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
 ENV PATH="$JAVA_HOME/bin:$PATH"
 
-# Clone the pdf2htmlEX repository (coolwanglu fork)
-RUN git clone --depth 1 --recursive https://github.com/coolwanglu/pdf2htmlEX.git
+# Clone the maintained pdf2htmlEX repository
+RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX using the older Poppler version
+# Build pdf2htmlEX using system Poppler libraries and enable SVG support
 RUN cd pdf2htmlEX && \
     mkdir -p build && cd build && \
-    cmake .. -DCMAKE_CXX_STANDARD=11 -DPDF2HTMLEX_USE_SYSTEM_POPPLER=ON && \
+    cmake .. -DCMAKE_CXX_STANDARD=11 -DENABLE_SVG=ON && \
     make -j$(nproc) && \
     make install
 
-# Clean up
+# Clean up the source directory
 RUN rm -rf pdf2htmlEX
 
 # Default command: show pdf2htmlEX help
