@@ -43,19 +43,20 @@ RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 # Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Clean up build artifacts.
+# Clean up the build directory.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
 # Stage 2: Final image for your Flask application.
 FROM python:3.9-slim
 
-# Install system libraries required by WeasyPrint.
+# Install system libraries required by WeasyPrint and pdf2htmlEX.
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
+    libjpeg8 \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the built pdf2htmlEX binary from the builder stage.
@@ -72,5 +73,5 @@ RUN pip install -r requirements.txt
 # Expose the port your Flask app listens on.
 EXPOSE 10000
 
-# Start your Flask app (using app.py).
+# Start your Flask application.
 CMD ["python", "app.py"]
