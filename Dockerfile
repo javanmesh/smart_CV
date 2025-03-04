@@ -1,4 +1,3 @@
-# Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -47,15 +46,8 @@ RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/
     make install && \
     cd / && rm -rf /tmp/poppler
 
-# Create symlinks so that headers expected without a subdirectory are available.
-RUN ln -s /usr/local/include/poppler/poppler-config.h /usr/local/include/poppler-config.h && \
-    ln -s /usr/local/include/poppler/OutputDev.h /usr/local/include/OutputDev.h && \
-    ln -s /usr/local/include/poppler/GlobalParams.h /usr/local/include/GlobalParams.h && \
-    ln -s /usr/local/include/poppler/CairoOutputDev.h /usr/local/include/CairoOutputDev.h && \
-    ln -s /usr/local/include/poppler/Link.h /usr/local/include/Link.h
-
-# Ensure that /usr/local/include is automatically added to the compiler search path.
-ENV CPATH=/usr/local/include
+# Set CPATH so that the compiler automatically looks in /usr/local/include/poppler.
+ENV CPATH=/usr/local/include/poppler
 
 # Ensure the newly built libraries are found at runtime.
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
@@ -72,8 +64,8 @@ RUN mkdir -p build && cd build && \
       -DENABLE_SVG=ON \
       -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler \
       -DPOPPLER_LIBRARIES=poppler \
-      -DCMAKE_C_FLAGS="-I/usr/local/include" \
-      -DCMAKE_CXX_FLAGS="-I/usr/local/include" && \
+      -DCMAKE_C_FLAGS="-I/usr/local/include/poppler" \
+      -DCMAKE_CXX_FLAGS="-I/usr/local/include/poppler" && \
     make -j$(nproc) && \
     make install
 
@@ -81,5 +73,4 @@ RUN mkdir -p build && cd build && \
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Default command: show pdf2htmlEX help.
 CMD ["pdf2htmlEX", "--help"]
