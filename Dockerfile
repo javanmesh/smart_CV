@@ -30,22 +30,19 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set the working directory to /app.
+# Set working directory for the application.
 WORKDIR /app
 
-# Copy the entire repository (including app.py and buildScripts) into /app.
+# Copy your repository into the container.
 COPY . /app
 
-# (Optional) Run version environment and report scripts to verify configuration.
-RUN chmod +x ./buildScripts/versionEnvs ./buildScripts/reportEnvs && \
-    ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
-
-# Run the top-level build script for Debian-based systems to build pdf2htmlEX.
+# Run the top-level build script for Debian-based systems.
+# (We've removed the versionEnvs/reportEnvs calls since they're missing.)
 RUN chmod +x ./buildScripts/buildInstallLocallyApt && \
     ./buildScripts/buildInstallLocallyApt
 
 # Expose the port your Flask app listens on (default: 10000).
 EXPOSE 10000
 
-# Set the default command to run your Flask application.
+# Start your Flask application.
 CMD ["python3", "app.py"]
