@@ -3,20 +3,17 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required build tools and dependencies (plus extra dependencies for the maintained fork)
+# Install build tools and dependencies
 RUN apt-get update && apt-get install -y \
+    build-essential \
     cmake \
     g++ \
     pkg-config \
     autoconf \
     automake \
     libtool \
-    libpoppler-dev \
-    libpoppler-cpp-dev \
-    libpoppler-glib-dev \
-    libpoppler-private-dev \
-    poppler-utils \
-    libfreetype6-dev \
+    libopenjp2-7-dev \
+    libtiff-dev \
     libjpeg-dev \
     libpng-dev \
     libcairo2-dev \
@@ -25,35 +22,43 @@ RUN apt-get update && apt-get install -y \
     fontforge \
     libfontforge-dev \
     libpango1.0-dev \
-    poppler-data \
     git \
     openjdk-11-jdk \
     npm \
     nodejs \
     python3-pip \
+    poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Java environment variables
-ENV JAVA_HOME=/usr/lib/jvm/java-11-openjdk-amd64
-ENV PATH="$JAVA_HOME/bin:$PATH"
+# Build and install Poppler 23.12.0 from source
+WORKDIR /tmp
+RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/poppler/poppler.git && \
+    mkdir -p poppler/build && cd poppler/build && \
+    cmake .. -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local && \
+    make -j$(nproc) && \
+    make install && \
+    cd / && rm -rf /tmp/poppler
+
+# Ensure the newly built libraries are found at runtime
+ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
 # Clone the maintained pdf2htmlEX repository
+WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX using system Poppler libraries with SVG enabled.
-# We change into the subdirectory that holds the CMakeLists.txt and add extra include flags
-RUN cd pdf2htmlEX/pdf2htmlEX && \
-    mkdir -p build && cd build && \
+# Build pdf2htmlEX using the new Poppler installation
+WORKDIR /tmp/pdf2htmlEX/pdf2htmlEX
+RUN mkdir -p build && cd build && \
     cmake .. \
       -DCMAKE_CXX_STANDARD=17 \
       -DENABLE_SVG=ON \
-      -DPOPPLER_INCLUDE_DIR=/usr/include/poppler \
-      -DCMAKE_CXX_FLAGS="-I/usr/include/poppler" && \
+      -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler && \
     make -j$(nproc) && \
     make install
 
 # Clean up the source directory
-RUN rm -rf pdf2htmlEX
+WORKDIR /
+RUN rm -rf /tmp/pdf2htmlEX
 
 # Default command: show pdf2htmlEX help
 CMD ["pdf2htmlEX", "--help"]
