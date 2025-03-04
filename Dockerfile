@@ -1,4 +1,5 @@
-FROM ubuntu:22.04
+# Stage 1: Build pdf2htmlEX using Ubuntu 22.04
+FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
@@ -30,19 +31,36 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Set working directory for the application.
-WORKDIR /app
+# Clone the pdf2htmlEX repository.
+WORKDIR /tmp
+RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Copy your repository into the container.
-COPY . /app
+WORKDIR /tmp/pdf2htmlEX
+
+# Set up environment variables (versions, paths, etc.).
+RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
 # Run the top-level build script for Debian-based systems.
-# (We've removed the versionEnvs/reportEnvs calls since they're missing.)
-RUN chmod +x ./buildScripts/buildInstallLocallyApt && \
-    ./buildScripts/buildInstallLocallyApt
+RUN ./buildScripts/buildInstallLocallyApt
 
-# Expose the port your Flask app listens on (default: 10000).
+# (Optional) Clean up the build directory.
+RUN rm -rf /tmp/pdf2htmlEX
+
+# Stage 2: Build the final image with your Flask app.
+FROM python:3.9-slim
+
+# Copy the built pdf2htmlEX binary from the builder stage.
+COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
+
+WORKDIR /app
+
+# Copy your Flask application code and dependencies.
+COPY . /app
+
+RUN pip install -r requirements.txt
+
+# Expose the port that your Flask app listens on.
 EXPOSE 10000
 
 # Start your Flask application.
-CMD ["python3", "app.py"]
+CMD ["python", "app.py"]
