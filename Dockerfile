@@ -2,7 +2,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and dependencies, including the CURL dev package.
+# Install required packages.
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -30,8 +30,7 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Build and install Poppler 23.12.0 from source,
-# disabling NSS3, GPGME, QT5, QT6, and LCMS support.
+# Clone, build, and install Poppler 23.12.0 with xpdf headers enabled.
 WORKDIR /tmp
 RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/poppler/poppler.git && \
     mkdir -p poppler/build && cd poppler/build && \
@@ -41,22 +40,23 @@ RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/
              -DENABLE_GPGME=OFF \
              -DENABLE_QT5=OFF \
              -DENABLE_QT6=OFF \
-             -DENABLE_LCMS=OFF && \
+             -DENABLE_LCMS=OFF \
+             -DENABLE_XPDF_HEADERS=ON && \
     make -j$(nproc) && \
     make install && \
     cd / && rm -rf /tmp/poppler
 
-# Set CPATH so that the compiler automatically looks in /usr/local/include/poppler.
+# Set CPATH so the compiler automatically looks in /usr/local/include/poppler.
 ENV CPATH=/usr/local/include/poppler
 
-# Ensure the newly built libraries are found at runtime.
+# Ensure runtime linker finds libraries.
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-# Clone the maintained pdf2htmlEX repository.
+# Clone pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX using the new Poppler installation.
+# Build pdf2htmlEX.
 WORKDIR /tmp/pdf2htmlEX/pdf2htmlEX
 RUN mkdir -p build && cd build && \
     cmake .. \
@@ -69,7 +69,7 @@ RUN mkdir -p build && cd build && \
     make -j$(nproc) && \
     make install
 
-# Clean up the source directory.
+# Clean up.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
