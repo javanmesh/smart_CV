@@ -3,7 +3,7 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and libraries.
+# Install required build tools and libraries.
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -37,22 +37,21 @@ RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# Set up environment variables (versions, paths, etc.)
+# Set up environment variables (versions, paths, etc.).
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
-# Run the build script for Debian-based systems.
+# Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
 # Clean up build artifacts.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Stage 2: Final image (Python app with Flask and WeasyPrint).
+# Stage 2: Final image for your Flask application.
 FROM python:3.9-slim
 
 # Install system libraries required by WeasyPrint.
 RUN apt-get update && apt-get install -y \
-    libgobject-2.0-0 \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
@@ -64,14 +63,14 @@ COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 
 WORKDIR /app
 
-# Copy your Flask application code.
+# Copy your application code.
 COPY . /app
 
 # Install Python dependencies.
 RUN pip install -r requirements.txt
 
-# Expose the port that your Flask app listens on.
+# Expose the port your Flask app listens on.
 EXPOSE 10000
 
-# Start your Flask application.
+# Start your Flask app (using app.py).
 CMD ["python", "app.py"]
