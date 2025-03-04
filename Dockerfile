@@ -1,9 +1,8 @@
-# Use Ubuntu 20.04 as the base image
 FROM ubuntu:20.04
 
+# Set noninteractive mode for apt-get to avoid prompts
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required build tools and dependencies, including an older Poppler version
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
@@ -12,9 +11,9 @@ RUN apt-get update && apt-get install -y \
     automake \
     libtool \
     poppler-utils \
-    libpoppler-dev=0.86.1-0ubuntu1 \
-    libpoppler-cpp-dev=0.86.1-0ubuntu1 \
-    libpoppler-glib-dev=0.86.1-0ubuntu1 \
+    libpoppler-dev \
+    libpoppler-cpp-dev \
+    libpoppler-glib-dev \
     libpoppler-private-dev \
     libfreetype6-dev \
     libjpeg-dev \
