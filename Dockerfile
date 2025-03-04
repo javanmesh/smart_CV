@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and dependencies
+# Install build tools and dependencies, including libcurl dev package.
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -28,10 +28,11 @@ RUN apt-get update && apt-get install -y \
     nodejs \
     python3-pip \
     poppler-utils \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Build and install Poppler 23.12.0 from source,
-# disabling NSS3, GPGME, Qt5, Qt6, and LCMS support.
+# disabling NSS3, GPGME, QT5, QT6, and LCMS support.
 WORKDIR /tmp
 RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/poppler/poppler.git && \
     mkdir -p poppler/build && cd poppler/build && \
@@ -46,26 +47,27 @@ RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/
     make install && \
     cd / && rm -rf /tmp/poppler
 
-# Ensure the newly built libraries are found at runtime
+# Ensure the newly built libraries are found at runtime.
 ENV LD_LIBRARY_PATH=/usr/local/lib:$LD_LIBRARY_PATH
 
-# Clone the maintained pdf2htmlEX repository
+# Clone the maintained pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX using the new Poppler installation
+# Build pdf2htmlEX using the new Poppler installation.
 WORKDIR /tmp/pdf2htmlEX/pdf2htmlEX
 RUN mkdir -p build && cd build && \
     cmake .. \
       -DCMAKE_CXX_STANDARD=17 \
       -DENABLE_SVG=ON \
-      -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler && \
+      -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler \
+      -DPOPPLER_LIBRARIES=/usr/local/lib && \
     make -j$(nproc) && \
     make install
 
-# Clean up the source directory
+# Clean up the source directory.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Default command: show pdf2htmlEX help
+# Default command: show pdf2htmlEX help.
 CMD ["pdf2htmlEX", "--help"]
