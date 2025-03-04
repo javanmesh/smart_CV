@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install required build tools and dependencies, including extra dependencies for the maintained fork
+# Install required build tools and dependencies (plus extra dependencies for the maintained fork)
 RUN apt-get update && apt-get install -y \
     cmake \
     g++ \
@@ -40,11 +40,15 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 # Clone the maintained pdf2htmlEX repository
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Build pdf2htmlEX using system Poppler libraries and enable SVG support
-# Note: The CMakeLists.txt is located in the 'pdf2htmlEX' subdirectory of the cloned repo
+# Build pdf2htmlEX using system Poppler libraries with SVG enabled.
+# We change into the subdirectory that holds the CMakeLists.txt and add extra include flags
 RUN cd pdf2htmlEX/pdf2htmlEX && \
     mkdir -p build && cd build && \
-    cmake .. -DCMAKE_CXX_STANDARD=17 -DENABLE_SVG=ON && \
+    cmake .. \
+      -DCMAKE_CXX_STANDARD=17 \
+      -DENABLE_SVG=ON \
+      -DPOPPLER_INCLUDE_DIR=/usr/include/poppler \
+      -DCMAKE_CXX_FLAGS="-I/usr/include/poppler" && \
     make -j$(nproc) && \
     make install
 
