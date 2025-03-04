@@ -3,7 +3,7 @@ FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and dependencies, including the CURL dev package.
+# Install build tools and dependencies, including CURL dev package.
 RUN apt-get update && apt-get install -y \
     build-essential \
     cmake \
@@ -47,7 +47,7 @@ RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/
     make install && \
     cd / && rm -rf /tmp/poppler
 
-# Create symlinks so that headers like poppler-config.h and OutputDev.h are found.
+# Create symlinks in /usr/local/include so headers are accessible
 RUN ln -s /usr/local/include/poppler/poppler-config.h /usr/local/include/poppler-config.h && \
     ln -s /usr/local/include/poppler/OutputDev.h /usr/local/include/OutputDev.h && \
     ln -s /usr/local/include/poppler/GlobalParams.h /usr/local/include/GlobalParams.h && \
@@ -68,7 +68,8 @@ RUN mkdir -p build && cd build && \
       -DCMAKE_CXX_STANDARD=17 \
       -DENABLE_SVG=ON \
       -DPOPPLER_INCLUDE_DIR=/usr/local/include/poppler \
-      -DPOPPLER_LIBRARIES=/usr/local/lib && \
+      -DPOPPLER_LIBRARIES=/usr/local/lib \
+      -DCMAKE_CXX_FLAGS="-I/usr/local/include" && \
     make -j$(nproc) && \
     make install
 
