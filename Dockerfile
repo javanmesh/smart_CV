@@ -41,9 +41,10 @@ ENV PATH="$JAVA_HOME/bin:$PATH"
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 # Build pdf2htmlEX using system Poppler libraries and enable SVG support
-RUN cd pdf2htmlEX && \
+# Note: The CMakeLists.txt is located in the 'pdf2htmlEX' subdirectory of the cloned repo
+RUN cd pdf2htmlEX/pdf2htmlEX && \
     mkdir -p build && cd build && \
-    cmake .. -DCMAKE_CXX_STANDARD=11 -DENABLE_SVG=ON && \
+    cmake .. -DCMAKE_CXX_STANDARD=17 -DENABLE_SVG=ON && \
     make -j$(nproc) && \
     make install
 
