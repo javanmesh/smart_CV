@@ -30,22 +30,22 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the pdf2htmlEX repository.
-WORKDIR /tmp
-RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
+# Set the working directory to /app.
+WORKDIR /app
 
-WORKDIR /tmp/pdf2htmlEX
+# Copy the entire repository (including app.py and buildScripts) into /app.
+COPY . /app
 
-# Set up environment variables (versions, paths, etc.).
-RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
+# (Optional) Run version environment and report scripts to verify configuration.
+RUN chmod +x ./buildScripts/versionEnvs ./buildScripts/reportEnvs && \
+    ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
-# Run the top-level build script for Debian-based systems.
-RUN ./buildScripts/buildInstallLocallyApt
+# Run the top-level build script for Debian-based systems to build pdf2htmlEX.
+RUN chmod +x ./buildScripts/buildInstallLocallyApt && \
+    ./buildScripts/buildInstallLocallyApt
 
-# Clean up the build directory.
-WORKDIR /
-RUN rm -rf /tmp/pdf2htmlEX
+# Expose the port your Flask app listens on (default: 10000).
+EXPOSE 10000
 
-# Instead of exiting immediately by running pdf2htmlEX --help,
-# keep the container alive. You can later exec into the container and run pdf2htmlEX.
-CMD ["tail", "-f", "/dev/null"]
+# Set the default command to run your Flask application.
+CMD ["python3", "app.py"]
