@@ -36,14 +36,16 @@ RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# Set up version environment variables and report them.
+# Set up environment variables (versions, paths, etc.).
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
 # Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Clean up.
+# Clean up the build directory.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-CMD ["pdf2htmlEX", "--help"]
+# Instead of exiting immediately by running pdf2htmlEX --help,
+# keep the container alive. You can later exec into the container and run pdf2htmlEX.
+CMD ["tail", "-f", "/dev/null"]
