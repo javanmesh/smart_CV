@@ -30,7 +30,8 @@ RUN apt-get update && apt-get install -y \
     poppler-utils \
     && rm -rf /var/lib/apt/lists/*
 
-# Build and install Poppler 23.12.0 from source, disabling NSS3, GPGME, and Qt5 support
+# Build and install Poppler 23.12.0 from source,
+# disabling NSS3, GPGME, Qt5, and Qt6 support
 WORKDIR /tmp
 RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/poppler/poppler.git && \
     mkdir -p poppler/build && cd poppler/build && \
@@ -38,7 +39,8 @@ RUN git clone --depth 1 --branch poppler-23.12.0 https://gitlab.freedesktop.org/
              -DCMAKE_INSTALL_PREFIX=/usr/local \
              -DENABLE_NSS3=OFF \
              -DENABLE_GPGME=OFF \
-             -DENABLE_QT5=OFF && \
+             -DENABLE_QT5=OFF \
+             -DENABLE_QT6=OFF && \
     make -j$(nproc) && \
     make install && \
     cd / && rm -rf /tmp/poppler
