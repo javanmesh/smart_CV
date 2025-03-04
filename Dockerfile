@@ -1,10 +1,10 @@
 FROM ubuntu:22.04
 
-# Set noninteractive mode for apt-get.
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install basic build tools and utilities required by the build scripts.
+# Install required build tools, sudo, and other packages.
 RUN apt-get update && apt-get install -y \
+    sudo \
     build-essential \
     cmake \
     g++ \
@@ -12,11 +12,23 @@ RUN apt-get update && apt-get install -y \
     autoconf \
     automake \
     libtool \
+    libopenjp2-7-dev \
+    libtiff-dev \
+    libjpeg-dev \
+    libpng-dev \
+    libcairo2-dev \
+    libglib2.0-dev \
+    libboost-all-dev \
+    fontforge \
+    libfontforge-dev \
+    libpango1.0-dev \
     git \
-    wget \
-    curl \
-    unzip \
+    openjdk-11-jdk \
+    npm \
+    nodejs \
     python3-pip \
+    poppler-utils \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
 # Clone the pdf2htmlEX repository (using the official GitHub repo).
@@ -25,16 +37,14 @@ RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# (Optional) Set and report versions – these scripts set key environment variables.
+# Set up environment variables (versions, paths, etc.)
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
 # Run the top-level build script for Debian-based systems.
-# This script downloads and builds the correct versions of Poppler, FontForge, and then pdf2htmlEX.
 RUN ./buildScripts/buildInstallLocallyApt
 
 # Clean up the build directory if desired.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Default command: display pdf2htmlEX help.
 CMD ["pdf2htmlEX", "--help"]
