@@ -59,8 +59,6 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
     libjpeg-dev \ #Install the development version of libjpeg in the runtime.
-    python3 \
-    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy the built pdf2htmlEX binary from the builder stage.
