@@ -2,5 +2,3 @@ flask
 pdfplumber
 beautifulsoup4
 mistralai
-pyppeteer
-nest_asyncio
