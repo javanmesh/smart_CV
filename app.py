@@ -9,13 +9,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from mistralai import Mistral
 from mistralai.models import UserMessage
-from pyppeteer import launch
 import zipfile
 import io
-import nest_asyncio
-
-# Apply nest_asyncio patch to allow nested async execution
-nest_asyncio.apply()
 
 app = Flask(__name__)
 
@@ -31,21 +26,26 @@ def extract_text_from_pdf(pdf_file):
             text += page.extract_text() + "\n\n"
     return text
 
-async def generate_pdf_with_puppeteer(html_content, output_path):
-    """Generates a PDF using Puppeteer with a manually installed Chromium."""
-    browser = await launch(
-        executablePath="/usr/bin/chromium-browser",  # Use system-installed Chromium
-        headless=True,
-        args=['--no-sandbox'],
-        autoInstall=False,  # Prevent Pyppeteer from downloading Chromium
-        handleSIG=False,
-        handleSIGHUP=False,
-        handleSIGTERM=False
-    )
-    page = await browser.newPage()
-    await page.setContent(html_content)
-    await page.pdf({'path': output_path, 'format': 'A4'})
-    await browser.close()
+def generate_pdf_with_chromium(html_content, output_path):
+    """Generates a PDF using Chromium directly via subprocess."""
+    temp_html_path = "temp.html"
+    
+    # Save HTML content to a temporary file
+    with open(temp_html_path, "w", encoding="utf-8") as f:
+        f.write(html_content)
+
+    # Run Chromium headless to convert HTML to PDF
+    try:
+        subprocess.run([
+            "chromium-browser",
+            "--headless",
+            "--disable-gpu",
+            "--no-sandbox",
+            "--print-to-pdf=" + output_path,
+            temp_html_path
+        ], check=True)
+    finally:
+        os.remove(temp_html_path)
 
 def extract_cv_details(cv_text):
     contact_info = {
@@ -105,9 +105,8 @@ Job Description:
     return str(soup)
 
 def generate_pdf(html_content, output_path):
-    """Runs Puppeteer safely within Flask using a system-installed Chromium."""
-    loop = asyncio.get_event_loop()
-    loop.run_until_complete(generate_pdf_with_puppeteer(html_content, output_path))
+    """Uses Chromium to convert HTML to PDF instead of Pyppeteer."""
+    generate_pdf_with_chromium(html_content, output_path)
 
 @app.route("/", methods=["GET", "POST"])
 def form():
