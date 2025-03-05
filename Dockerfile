@@ -1,8 +1,9 @@
-# Stage 1: Build pdf2htmlEX using Ubuntu 22.04 (remains unchanged)
+# Stage 1: Build pdf2htmlEX using Ubuntu 22.04
 FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
+# Install required build tools and libraries.
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -30,38 +31,52 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
+# Clone the pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
+
+# Set up environment variables (versions, paths, etc.).
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
+
+# Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
+# Clean up build artifacts.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Stage 2: Switch final stage to Ubuntu 22.04 to ensure libjpeg-turbo8 compatibility
-FROM ubuntu:22.04
+# Stage 2: Final image for your Flask app.
+# Using Ubuntu 20.04 so we can install libjpeg8.
+FROM ubuntu:20.04
 
-# Install system libraries and Python
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime libraries required by WeasyPrint and pdf2htmlEX.
 RUN apt-get update && apt-get install -y \
-    python3 \
-    python3-pip \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
-    libjpeg-turbo8 \  # This provides libjpeg.so.8 with LIBJPEG_8.0
+    libjpeg8 \
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the pdf2htmlEX binary from the builder
+# Copy the built pdf2htmlEX binary from the builder stage.
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 
 WORKDIR /app
+
+# Copy your application code.
 COPY . /app
 
-# Install Python dependencies
+# Install Python dependencies.
 RUN pip3 install -r requirements.txt
 
+# Expose the port your Flask app listens on.
 EXPOSE 10000
+
+# Start your Flask application.
 CMD ["python3", "app.py"]
