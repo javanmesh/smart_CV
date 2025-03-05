@@ -1,9 +1,9 @@
-# Stage 1: Build pdf2htmlEX using Ubuntu 22.04
-FROM ubuntu:22.04 AS builder
+# Stage 1: Build pdf2htmlEX using Debian Bookworm to match runtime environment
+FROM debian:bookworm AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and required libraries.
+# Install build tools and required libraries
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -31,49 +31,41 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone the pdf2htmlEX repository.
+# Clone and build pdf2htmlEX
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
-
-# Set up environment variables (versions, paths, etc.)
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
-
-# Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Clean up build artifacts.
+# Cleanup
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Stage 2: Final image for your Flask application.
-FROM python:3.11-slim
+# Stage 2: Use Python image based on Debian Bookworm
+FROM python:3.11
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime libraries required by WeasyPrint and pdf2htmlEX.
+# Install runtime dependencies (now using Bookworm's libjpeg62-turbo)
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
-    libjpeg-dev \ #Install the development version of libjpeg in the runtime.
+    libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the built pdf2htmlEX binary from the builder stage.
+# Create symbolic link for libjpeg.so.8
+RUN ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62 /usr/lib/x86_64-linux-gnu/libjpeg.so.8
+
+# Copy built binary from builder
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 
+# Application setup
 WORKDIR /app
-
-# Copy your application code.
 COPY . /app
-
-# Install Python dependencies.
 RUN pip install -r requirements.txt
-
-# Expose the port your Flask app listens on.
 EXPOSE 10000
-
-# Start your Flask application.
 CMD ["python", "app.py"]
