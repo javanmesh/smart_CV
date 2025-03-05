@@ -3,7 +3,7 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and libraries for pdf2htmlEX.
+# Install build tools and required libraries.
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -48,21 +48,23 @@ WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
 # Stage 2: Final image for your Flask application.
-# Use Ubuntu 20.04 to get libjpeg8.
-FROM ubuntu:20.04
+FROM python:3.11-slim
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime libraries and Python.
+# Install runtime libraries required by WeasyPrint and pdf2htmlEX.
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
-    libjpeg8 \
+    libjpeg62-turbo \
     python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
+
+# Create a symlink so that pdf2htmlEX finds libjpeg.so.8.
+RUN ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62 /usr/lib/x86_64-linux-gnu/libjpeg.so.8 || true
 
 # Copy the built pdf2htmlEX binary from the builder stage.
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
@@ -73,14 +75,10 @@ WORKDIR /app
 COPY . /app
 
 # Install Python dependencies.
-# This assumes you have a requirements.txt in your project.
-RUN pip3 install -r requirements.txt
-
-# Explicitly install Flask in case it is missing.
-RUN pip3 install flask
+RUN pip install -r requirements.txt
 
 # Expose the port your Flask app listens on.
 EXPOSE 10000
 
 # Start your Flask application.
-CMD ["python3", "app.py"]
+CMD ["python", "app.py"]
