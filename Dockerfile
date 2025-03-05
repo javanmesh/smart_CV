@@ -41,11 +41,9 @@ WORKDIR /tmp/pdf2htmlEX
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Clean up build artifacts.
-WORKDIR /
-RUN rm -rf /tmp/pdf2htmlEX
+# (Optional) Verify installation, e.g. pdf2htmlEX --version
 
-# Stage 2: Final runtime image (Ubuntu 22.04 ensures matching library versions)
+# Stage 2: Final runtime image (using Ubuntu 22.04 for consistency)
 FROM ubuntu:22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
@@ -61,8 +59,12 @@ RUN apt-get update && apt-get install -y \
     libjpeg-turbo8 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the built pdf2htmlEX binary from the builder stage.
+# Copy the built pdf2htmlEX binary and its data folder from the builder stage.
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
+COPY --from=builder /usr/local/share/pdf2htmlEX /usr/local/share/pdf2htmlEX
+
+# (Optional) If needed, you can also set an environment variable for the data directory:
+ENV PDF2HTMLEX_DATA_DIR=/usr/local/share/pdf2htmlEX
 
 WORKDIR /app
 
