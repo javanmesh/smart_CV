@@ -3,7 +3,7 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools, sudo, and required libraries
+# Install necessary dependencies
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -30,27 +30,25 @@ RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Node.js and Puppeteer dependencies
-RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - \
-    && apt-get install -y nodejs \
-    && npm install -g puppeteer
+# Install Chromium manually to prevent runtime downloads
+RUN apt-get update && apt-get install -y chromium-browser
 
-# Clone the pdf2htmlEX repository
+# Clone pdf2htmlEX repository
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# Set up environment variables and build pdf2htmlEX
+# Build pdf2htmlEX
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Stage 2: Final runtime image (using Ubuntu 22.04 for consistency)
+# Stage 2: Final runtime image
 FROM ubuntu:22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime libraries required by pdf2htmlEX and Python app
+# Install runtime dependencies
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -59,10 +57,13 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
     libjpeg-turbo8 \
-    curl \
+    chromium-browser \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy the built pdf2htmlEX binary and its data folder from the builder stage
+# Set environment variable for Puppeteer to use system Chromium
+ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
+
+# Copy pdf2htmlEX from builder stage
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 COPY --from=builder /usr/local/share/pdf2htmlEX /usr/local/share/pdf2htmlEX
 
@@ -77,7 +78,7 @@ COPY . /app
 # Install Python dependencies
 RUN pip3 install -r requirements.txt
 
-# Expose the port your Flask app listens on
+# Expose the port
 EXPOSE 10000
 
 # Start Flask application
