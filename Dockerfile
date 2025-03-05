@@ -51,16 +51,16 @@ RUN rm -rf /tmp/pdf2htmlEX
 FROM python:3.9-slim
 
 # Install system libraries required by WeasyPrint and pdf2htmlEX.
-# Use libjpeg-turbo8 instead of libjpeg8 (which isn't available) and then create a symlink.
+# Use libjpeg62-turbo (which provides libjpeg.so.62) because libjpeg-turbo8 is not available.
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
-    libjpeg-turbo8 \
+    libjpeg62-turbo \
     && rm -rf /var/lib/apt/lists/*
 
-# Create a symlink so that libjpeg.so.8 points to the available libjpeg.so.62.
+# Create a symbolic link so that libjpeg.so.8 points to the installed libjpeg.so.62.
 RUN ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62 /usr/lib/x86_64-linux-gnu/libjpeg.so.8 || true
 
 # Copy the built pdf2htmlEX binary from the builder stage.
