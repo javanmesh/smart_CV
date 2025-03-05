@@ -9,6 +9,8 @@ from datetime import datetime
 from bs4 import BeautifulSoup
 from mistralai import Mistral
 from mistralai.models import UserMessage
+import zipfile
+import io
 
 app = Flask(__name__)
 
@@ -73,7 +75,7 @@ def convert_pdf_to_html(pdf_file):
     with open(output_html_path, "r", encoding="utf-8") as f:
         html_content = f.read()
     os.remove(temp_pdf_path)
-    # Optionally, remove or archive the intermediate HTML file.
+    # Optionally, you might keep or archive output_html_path
     return html_content
 
 def customize_html(html_content, cv_data, job_description):
@@ -101,7 +103,7 @@ Keep the structure minimal so it can be integrated into the existing layout.
     custom_html = response.choices[0].message.content
     custom_fragment = BeautifulSoup(custom_html, "html.parser")
     
-    # For example, insert the customized content at the beginning of the <body>
+    # Insert the customized content at the beginning of the <body> if available.
     if soup.body:
          soup.body.insert(0, custom_fragment)
     else:
@@ -148,10 +150,11 @@ def form():
         
         candidate_name = cv_data.get("name", "Candidate").replace(" ", "_")
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        filename = f"{candidate_name}_{timestamp}.pdf"
+        pdf_filename = f"{candidate_name}_{timestamp}.pdf"
+        html_filename = f"{candidate_name}_{timestamp}.html"
         
         if document_type == "resume":
-            # Convert the original PDF resume to HTML while keeping its design.
+            # Convert the original PDF resume to HTML.
             cv_file.seek(0)
             original_html = convert_pdf_to_html(cv_file)
             # Customize the HTML content with job-specific enhancements.
@@ -159,10 +162,30 @@ def form():
         else:
             customized_html = generate_cover_letter(cv_data, job_description)
         
-        generate_pdf(customized_html, filename)
-        return send_file(filename, as_attachment=True)
+        # Generate PDF from the customized HTML.
+        generate_pdf(customized_html, pdf_filename)
+        # Save the customized HTML to a file.
+        with open(html_filename, "w", encoding="utf-8") as f:
+            f.write(customized_html)
+        
+        # Package both the PDF and the HTML into a ZIP file for download.
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+            zip_file.write(pdf_filename)
+            zip_file.write(html_filename)
+        zip_buffer.seek(0)
+        
+        # Clean up temporary files.
+        os.remove(pdf_filename)
+        os.remove(html_filename)
+        
+        # Return the ZIP file as an attachment.
+        return send_file(zip_buffer, as_attachment=True,
+                         download_name=f"{candidate_name}_{timestamp}.zip",
+                         mimetype="application/zip")
     
     return render_template("form.html")
+
 @app.route('/pdf2html-version')
 def pdf2html_version():
     try:
@@ -170,7 +193,6 @@ def pdf2html_version():
     except Exception as e:
         version = str(e)
     return f"pdf2htmlEX version: {version}"
-
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 10000)))
