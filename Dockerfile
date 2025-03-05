@@ -1,11 +1,10 @@
-# Stage 1: Build pdf2htmlEX using Debian Bookworm to match runtime environment
-FROM debian:bookworm AS builder
+# Stage 1: Build pdf2htmlEX using Ubuntu 22.04
+FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and required libraries
+# Install build tools and required libraries.
 RUN apt-get update && apt-get install -y \
-    sudo \
     build-essential \
     cmake \
     g++ \
@@ -31,41 +30,49 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone and build pdf2htmlEX
+# Clone the pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
+
+# Set up environment variables and build pdf2htmlEX.
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 RUN ./buildScripts/buildInstallLocallyApt
 
-# Cleanup
+# Clean up build artifacts.
 WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
-# Stage 2: Use Python image based on Debian Bookworm
-FROM python:3.11
+# Stage 2: Final runtime image (Ubuntu 22.04 ensures matching library versions)
+FROM ubuntu:22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies (now using Bookworm's libjpeg62-turbo)
+# Install runtime libraries required by pdf2htmlEX and your Python app.
 RUN apt-get update && apt-get install -y \
+    python3 \
+    python3-pip \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
-    libjpeg62-turbo \
+    libjpeg-turbo8 \
     && rm -rf /var/lib/apt/lists/*
 
-# Create symbolic link for libjpeg.so.8
-RUN ln -s /usr/lib/x86_64-linux-gnu/libjpeg.so.62 /usr/lib/x86_64-linux-gnu/libjpeg.so.8
-
-# Copy built binary from builder
+# Copy the built pdf2htmlEX binary from the builder stage.
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 
-# Application setup
 WORKDIR /app
+
+# Copy your application code.
 COPY . /app
-RUN pip install -r requirements.txt
+
+# Install Python dependencies.
+RUN pip3 install -r requirements.txt
+
+# Expose the port your Flask app listens on.
 EXPOSE 10000
-CMD ["python", "app.py"]
+
+# Start your Flask application.
+CMD ["python3", "app.py"]
