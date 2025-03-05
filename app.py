@@ -92,7 +92,10 @@ Job Description:
     return str(soup)
 
 def generate_pdf(html_content, output_path):
-    asyncio.run(generate_pdf_with_puppeteer(html_content, output_path))
+    """Runs Puppeteer in an event loop safely."""
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    loop.run_until_complete(generate_pdf_with_puppeteer(html_content, output_path))
 
 @app.route("/", methods=["GET", "POST"])
 def form():
