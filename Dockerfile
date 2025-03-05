@@ -3,8 +3,9 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and required libraries.
+# Install build tools, sudo, and required libraries.
 RUN apt-get update && apt-get install -y \
+    sudo \
     build-essential \
     cmake \
     g++ \
