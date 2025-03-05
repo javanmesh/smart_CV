@@ -1,49 +1,81 @@
-# Stage 1: Build environment using Ubuntu 22.04
+# Stage 1: Build pdf2htmlEX using Ubuntu 22.04
 FROM ubuntu:22.04 AS builder
 
-# Install required dependencies for building
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install build tools and required libraries.
 RUN apt-get update && apt-get install -y \
+    sudo \
     build-essential \
-    wget \
-    curl \
+    cmake \
+    g++ \
+    pkg-config \
+    autoconf \
+    automake \
+    libtool \
+    libopenjp2-7-dev \
+    libtiff-dev \
     libjpeg-dev \
+    libpng-dev \
+    libcairo2-dev \
+    libglib2.0-dev \
+    libboost-all-dev \
+    fontforge \
+    libpango1.0-dev \
+    git \
+    openjdk-11-jdk \
+    npm \
+    nodejs \
+    python3-pip \
+    poppler-utils \
+    libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Install Python 3.11
-RUN apt-get update && apt-get install -y python3.11 python3.11-venv python3.11-dev
+# Clone the pdf2htmlEX repository.
+WORKDIR /tmp
+RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
-# Set Python 3.11 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.11 1
+WORKDIR /tmp/pdf2htmlEX
 
-# Stage 2: Final environment using Ubuntu 20.04
-FROM ubuntu:20.04
+# Set up environment variables (versions, paths, etc.)
+RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
-# Install required dependencies, including libjpeg8
+# Run the top-level build script for Debian-based systems.
+RUN ./buildScripts/buildInstallLocallyApt
+
+# Clean up build artifacts.
+WORKDIR /
+RUN rm -rf /tmp/pdf2htmlEX
+
+# Stage 2: Final image for your Flask application.
+FROM python:3.11-slim
+
+ENV DEBIAN_FRONTEND=noninteractive
+
+# Install runtime libraries required by WeasyPrint and pdf2htmlEX.
 RUN apt-get update && apt-get install -y \
-    python3.9 \
-    python3.9-venv \
-    python3.9-dev \
-    libjpeg8 \
-    libjpeg8-dev \
-    pdf2htmlex \
+    libglib2.0-0 \
+    libpango-1.0-0 \
+    libpangocairo-1.0-0 \
+    libgdk-pixbuf2.0-0 \
+    libjpeg-dev \ #Install the development version of libjpeg in the runtime.
+    python3 \
+    python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
-# Set Python 3.9 as default
-RUN update-alternatives --install /usr/bin/python3 python3 /usr/bin/python3.9 1
+# Copy the built pdf2htmlEX binary from the builder stage.
+COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
 
-# Copy necessary files from the build stage if needed
-COPY --from=builder /usr/bin/python3.11 /usr/bin/python3.11
-
-# Install application dependencies
 WORKDIR /app
-COPY requirements.txt .
-RUN python3 -m venv venv && . venv/bin/activate && pip install --no-cache-dir -r requirements.txt
 
-# Copy the application source code
-COPY . .
+# Copy your application code.
+COPY . /app
 
-# Expose the application port
+# Install Python dependencies.
+RUN pip install -r requirements.txt
+
+# Expose the port your Flask app listens on.
 EXPOSE 10000
 
-# Start the application
-CMD ["venv/bin/python", "app.py"]
+# Start your Flask application.
+CMD ["python", "app.py"]
