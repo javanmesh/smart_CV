@@ -3,7 +3,7 @@ FROM ubuntu:22.04 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install build tools and required libraries.
+# Install build tools and libraries for pdf2htmlEX.
 RUN apt-get update && apt-get install -y \
     sudo \
     build-essential \
@@ -31,16 +31,16 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     && rm -rf /var/lib/apt/lists/*
 
-# Clone pdf2htmlEX repository.
+# Clone the pdf2htmlEX repository.
 WORKDIR /tmp
 RUN git clone --depth 1 --recursive https://github.com/pdf2htmlEX/pdf2htmlEX.git
 
 WORKDIR /tmp/pdf2htmlEX
 
-# Set up version environment variables and report them.
+# Set up environment variables (versions, paths, etc.)
 RUN ./buildScripts/versionEnvs && ./buildScripts/reportEnvs
 
-# Run the build script for Debian-based systems.
+# Run the top-level build script for Debian-based systems.
 RUN ./buildScripts/buildInstallLocallyApt
 
 # Clean up build artifacts.
@@ -48,19 +48,19 @@ WORKDIR /
 RUN rm -rf /tmp/pdf2htmlEX
 
 # Stage 2: Final image for your Flask application.
-# Use Ubuntu 20.04 to have libjpeg8 available.
+# Use Ubuntu 20.04 to get libjpeg8.
 FROM ubuntu:20.04
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime libraries required by WeasyPrint and pdf2htmlEX.
+# Install runtime libraries and Python.
 RUN apt-get update && apt-get install -y \
     libglib2.0-0 \
     libpango-1.0-0 \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
     libjpeg8 \
-    python3.9 \
+    python3 \
     python3-pip \
     && rm -rf /var/lib/apt/lists/*
 
@@ -73,10 +73,14 @@ WORKDIR /app
 COPY . /app
 
 # Install Python dependencies.
+# This assumes you have a requirements.txt in your project.
 RUN pip3 install -r requirements.txt
+
+# Explicitly install Flask in case it is missing.
+RUN pip3 install flask
 
 # Expose the port your Flask app listens on.
 EXPOSE 10000
 
 # Start your Flask application.
-CMD ["python3.9", "app.py"]
+CMD ["python3", "app.py"]
