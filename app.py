@@ -14,7 +14,7 @@ import zipfile
 import io
 import nest_asyncio
 
-# Apply nest_asyncio patch
+# Apply nest_asyncio patch to allow nested async execution
 nest_asyncio.apply()
 
 app = Flask(__name__)
@@ -32,7 +32,16 @@ def extract_text_from_pdf(pdf_file):
     return text
 
 async def generate_pdf_with_puppeteer(html_content, output_path):
-    browser = await launch(headless=True, args=['--no-sandbox'], handleSIG=False)
+    """Generates a PDF using Puppeteer with a manually installed Chromium."""
+    browser = await launch(
+        executablePath="/usr/bin/chromium-browser",  # Use system-installed Chromium
+        headless=True,
+        args=['--no-sandbox'],
+        autoInstall=False,  # Prevent Pyppeteer from downloading Chromium
+        handleSIG=False,
+        handleSIGHUP=False,
+        handleSIGTERM=False
+    )
     page = await browser.newPage()
     await page.setContent(html_content)
     await page.pdf({'path': output_path, 'format': 'A4'})
@@ -96,7 +105,7 @@ Job Description:
     return str(soup)
 
 def generate_pdf(html_content, output_path):
-    """Runs Puppeteer safely within Flask by applying nest_asyncio."""
+    """Runs Puppeteer safely within Flask using a system-installed Chromium."""
     loop = asyncio.get_event_loop()
     loop.run_until_complete(generate_pdf_with_puppeteer(html_content, output_path))
 
