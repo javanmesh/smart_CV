@@ -3,7 +3,7 @@ import pdfplumber
 import re
 import json
 import os
-# Remove subprocess import as we no longer need it for PDF generation
+import subprocess
 import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
