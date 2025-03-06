@@ -48,7 +48,7 @@ FROM ubuntu:22.04 AS runtime
 
 ENV DEBIAN_FRONTEND=noninteractive
 
-# Install runtime dependencies
+# Install runtime dependencies (removed chromium-browser since Playwright will install its own)
 RUN apt-get update && apt-get install -y \
     python3 \
     python3-pip \
@@ -57,11 +57,7 @@ RUN apt-get update && apt-get install -y \
     libpangocairo-1.0-0 \
     libgdk-pixbuf2.0-0 \
     libjpeg-turbo8 \
-    chromium-browser \
     && rm -rf /var/lib/apt/lists/*
-
-# Set environment variable for Puppeteer to use system Chromium
-ENV PUPPETEER_EXECUTABLE_PATH=/usr/bin/chromium-browser
 
 # Copy pdf2htmlEX from builder stage
 COPY --from=builder /usr/local/bin/pdf2htmlEX /usr/local/bin/pdf2htmlEX
@@ -75,8 +71,8 @@ WORKDIR /app
 # Copy application code
 COPY . /app
 
-# Install Python dependencies
-RUN pip3 install -r requirements.txt
+# Install Python dependencies and then Playwright browsers
+RUN pip3 install -r requirements.txt && playwright install
 
 # Expose the port
 EXPOSE 10000
