@@ -3,7 +3,7 @@ import pdfplumber
 import re
 import json
 import os
-import subprocess
+# Remove subprocess import as we no longer need it for PDF generation
 import asyncio
 from datetime import datetime
 from bs4 import BeautifulSoup
@@ -11,6 +11,9 @@ from mistralai import Mistral
 from mistralai.models import UserMessage
 import zipfile
 import io
+
+# Import Playwright
+from playwright.sync_api import sync_playwright
 
 app = Flask(__name__)
 
@@ -26,26 +29,19 @@ def extract_text_from_pdf(pdf_file):
             text += page.extract_text() + "\n\n"
     return text
 
-def generate_pdf_with_chromium(html_content, output_path):
-    """Generates a PDF using Chromium directly via subprocess."""
-    temp_html_path = "temp.html"
-    
-    # Save HTML content to a temporary file
-    with open(temp_html_path, "w", encoding="utf-8") as f:
-        f.write(html_content)
-
-    # Run Chromium headless to convert HTML to PDF
-    try:
-        subprocess.run([
-            "chromium-browser",
-            "--headless",
-            "--disable-gpu",
-            "--no-sandbox",
-            "--print-to-pdf=" + output_path,
-            temp_html_path
-        ], check=True)
-    finally:
-        os.remove(temp_html_path)
+def generate_pdf_with_playwright(html_content, output_path):
+    """Generates a PDF using Playwright instead of calling Chromium via subprocess."""
+    with sync_playwright() as p:
+        # Launch Chromium with --no-sandbox (useful for container environments)
+        browser = p.chromium.launch(headless=True, args=["--no-sandbox"])
+        page = browser.new_page()
+        # Set the HTML content directly
+        page.set_content(html_content)
+        # Optionally wait for all network activity to finish
+        page.wait_for_load_state("networkidle")
+        # Generate PDF (you can tweak options like format, margins, etc.)
+        page.pdf(path=output_path, format="A4")
+        browser.close()
 
 def extract_cv_details(cv_text):
     contact_info = {
@@ -78,6 +74,7 @@ def convert_pdf_to_html(pdf_file):
         f.write(pdf_file.read())
     output_html_path = "converted.html"
     command = ["pdf2htmlEX", temp_pdf_path, output_html_path]
+    # Using subprocess to call pdf2htmlEX; no changes here.
     subprocess.run(command, check=True)
     with open(output_html_path, "r", encoding="utf-8") as f:
         html_content = f.read()
@@ -105,8 +102,8 @@ Job Description:
     return str(soup)
 
 def generate_pdf(html_content, output_path):
-    """Uses Chromium to convert HTML to PDF instead of Pyppeteer."""
-    generate_pdf_with_chromium(html_content, output_path)
+    """Uses Playwright to convert HTML to PDF."""
+    generate_pdf_with_playwright(html_content, output_path)
 
 @app.route("/", methods=["GET", "POST"])
 def form():
