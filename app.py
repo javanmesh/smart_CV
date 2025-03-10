@@ -83,11 +83,29 @@ def convert_pdf_to_html(pdf_file):
 
 def customize_html(html_content, cv_data, job_description):
     soup = BeautifulSoup(html_content, "html.parser")
-    prompt = f"""Customize the resume content for this job.
-Candidate Details:
+    prompt = f"""
+You are an expert resume consultant specializing in tailoring resumes to specific job openings. Your task is to customize the candidate's CV based on the job description provided. Use the following instructions to guide your work:
+
+1. **Analyze the Candidate Details and Job Description:**  
+   - Review the candidate's skills, experiences, and achievements (provided in JSON format below).  
+   - Carefully examine the job description and identify key requirements, skills, and responsibilities.
+
+2. **Customize and Reorder Content:**  
+   - Highlight and prioritize experiences and achievements that directly match the job requirements.  
+   - Rephrase and enhance bullet points to include strong action verbs and quantifiable results where applicable.  
+   - Adjust the tone to be professional and aligned with the industry of the job.
+
+3. **Output Requirements:**  
+   - Provide the customized resume content in HTML format.  
+   - Ensure the resume is clear, concise, and well-organized, with sections such as Summary, Skills, Experience, and Education clearly defined.
+
+Candidate Details (JSON):
 {json.dumps(cv_data, indent=2)}
+
 Job Description:
 {job_description}
+
+Please generate a fully customized resume in HTML that effectively showcases the candidate’s fit for this job.
 """
     response = client.chat.complete(
          model="mistral-small",
